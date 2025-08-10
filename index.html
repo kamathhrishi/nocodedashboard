@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered CSV Dashboard Generator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --text-light: #95a5a6;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #ecf0f1;
+            --border-color: #dee2e6;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --border-radius-lg: 12px;
+            --transition: all 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 3rem 0 2rem 0;
+            border-radius: var(--border-radius-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        }
+
+        .header .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* Main Card */
+        .main-card {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--card-shadow);
+            padding: 3rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0,0,0,0.04);
+            transition: var(--transition);
+        }
+
+        .main-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Upload Section */
+        .upload-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .upload-section h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .upload-section p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius-lg);
+            padding: 3rem 2rem;
+            margin: 2rem 0;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            background: var(--bg-secondary);
+        }
+
+        .upload-area:hover {
+            border-color: var(--secondary-color);
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--secondary-color);
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .upload-hint {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Selected File Display */
+        .selected-file {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border: 2px solid var(--secondary-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: var(--card-shadow);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-details {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--secondary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .file-text h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .file-text p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .remove-file {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .remove-file:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+
+        /* Prompt Section */
+        .prompt-section {
+            margin-bottom: 3rem;
+            text-align: left;
+        }
+
+        .prompt-section h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .prompt-section h2 i {
+            color: var(--secondary-color);
+        }
+
+        .prompt-section p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        .prompt-input-container {
+            max-width: 100%;
+        }
+
+        .prompt-textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: vertical;
+            transition: var(--transition);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .prompt-textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            background: var(--bg-primary);
+        }
+
+        .prompt-textarea::placeholder {
+            color: var(--text-light);
+        }
+
+        .prompt-hint {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border: 1px solid #bbdefb;
+            color: #1976d2;
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .prompt-hint strong {
+            color: #1565c0;
+        }
+
+        /* Chart Examples and Business Context Styling */
+        .chart-examples, .business-examples {
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-examples:hover, .business-examples:hover {
+            border-color: var(--secondary-color);
+            box-shadow: var(--card-shadow);
+        }
+
+        .chart-examples h4, .business-examples h4 {
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chart-examples h4 i {
+            color: var(--accent-color);
+        }
+
+        .business-examples h4 i {
+            color: var(--success-color);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .example-item {
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .example-item:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .example-item strong {
+            color: var(--secondary-color);
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        /* Generate Button */
+        .generate-btn {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 1.25rem 3rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            display: block;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        .generate-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .generate-btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Progress Section */
+        .progress-container {
+            display: none;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background-color: var(--bg-tertiary);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color), var(--accent-color));
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Result Section */
+        .result-container {
+            display: none;
+            margin-top: 2rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+            border-radius: var(--border-radius-lg);
+            border: 2px solid var(--success-color);
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+            box-shadow: var(--card-shadow);
+        }
+
+        .result-title {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .dashboard-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--success-color);
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            transition: var(--transition);
+            font-size: 1.1rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .dashboard-link:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .fallback-link {
+            display: none;
+            background: var(--warning-color);
+            margin-top: 1rem;
+        }
+
+        .fallback-link:hover {
+            background: #e67e22;
+        }
+
+        /* Error Message */
+        .error-message {
+            background: linear-gradient(135deg, #fdf2f2 0%, #fde8e8 100%);
+            color: var(--accent-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 2rem 0;
+            display: none;
+            border: 2px solid var(--accent-color);
+            text-align: center;
+            font-weight: 500;
+            box-shadow: var(--card-shadow);
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 0.75rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Message */
+        .status-message {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+        }
+
+        .status-message.success {
+            color: var(--success-color);
+            background: #e8f5e8;
+            border-color: var(--success-color);
+        }
+
+        .status-message.error {
+            color: var(--accent-color);
+            background: #fdf2f2;
+            border-color: var(--accent-color);
+        }
+
+        /* CSV Preview Styles */
+        .csv-preview {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .csv-preview:hover {
+            border-color: var(--secondary-color);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .preview-header h4 {
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .preview-toggle {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .preview-toggle:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .preview-toggle i {
+            font-size: 0.8rem;
+        }
+
+        .preview-content {
+            display: none;
+        }
+
+        .preview-loading {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--text-secondary);
+        }
+        
+        .preview-loading span {
+            margin-left: 0.75rem;
+            font-weight: 500;
+        }
+
+        .preview-data {
+            display: none;
+        }
+
+        .preview-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .columns-info {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .columns-info h5 {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .columns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .column-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+        
+        .column-item:hover {
+            border-color: var(--secondary-color);
+            background: var(--bg-primary);
+            transform: translateY(-1px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .column-item strong {
+            color: var(--secondary-color);
+        }
+
+        .data-table-container {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .data-table-container h5 {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--bg-primary);
+            box-shadow: var(--card-shadow);
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .preview-table th, .preview-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .preview-table th {
+            background-color: var(--secondary-color);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+            padding: 0.75rem 0.5rem;
+        }
+
+        .preview-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .preview-table tr:hover {
+            background-color: var(--bg-secondary);
+        }
+        
+        .preview-table td {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .preview-table td:hover {
+            white-space: normal;
+            word-break: break-word;
+            max-width: none;
+            position: relative;
+            z-index: 1;
+            background-color: var(--bg-primary);
+            box-shadow: var(--card-shadow);
+        }
+
+        .summary-stats {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .summary-stats h5 {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+        
+        .stat-item:hover {
+            border-color: var(--secondary-color);
+            background: var(--bg-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .main-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .upload-area {
+                padding: 2rem 1rem;
+            }
+
+            .upload-icon {
+                font-size: 3rem;
+            }
+
+            .upload-text {
+                font-size: 1.25rem;
+            }
+
+            .generate-btn {
+                padding: 1rem 2rem;
+                font-size: 1.1rem;
+            }
+            
+            /* CSV Preview responsive */
+            .preview-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            .preview-toggle {
+                align-self: center;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .columns-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .preview-table th, .preview-table td {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .main-card {
+                padding: 1.5rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <div class="container">
+                <h1><i class="fas fa-chart-line me-3"></i>AI Dashboard Generator</h1>
+                <p>Transform your CSV data into intelligent, interactive dashboards powered by artificial intelligence. Get instant insights, beautiful visualizations, and professional analytics in seconds.</p>
+            </div>
+        </div>
+
+        <!-- Main Card -->
+        <div class="main-card">
+            <!-- Custom Prompt Section -->
+            <div class="prompt-section">
+                <h2>
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Custom Dashboard Guidance
+                </h2>
+                <p>
+                    Tell our AI what you expect in your dashboard. Be specific about insights, visualizations, or analysis focus areas.
+                </p>
+                
+                <!-- Chart Type Examples -->
+                <div class="chart-examples">
+                    <h4>
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Chart Type Examples:
+                    </h4>
+                    <div class="examples-grid">
+                        <div class="example-item">
+                            <strong>Trends:</strong> "Show sales trends over time, monthly revenue patterns"
+                        </div>
+                        <div class="example-item">
+                            <strong>Comparisons:</strong> "Compare performance by region, top 10 products"
+                        </div>
+                        <div class="example-item">
+                            <strong>Correlations:</strong> "Analyze relationship between marketing spend and sales"
+                        </div>
+                        <div class="example-item">
+                            <strong>Distributions:</strong> "Show customer age distribution, price range analysis"
+                        </div>
+                        <div class="example-item">
+                            <strong>Rankings:</strong> "Top performers, bottom 20% analysis"
+                        </div>
+                        <div class="example-item">
+                            <strong>Patterns:</strong> "Seasonal patterns, weekly trends, cyclical behavior"
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Business Context Examples -->
+                <div class="business-examples">
+                    <h4>
+                        <i class="fas fa-briefcase me-2"></i>
+                        Business Context Examples:
+                    </h4>
+                    <div class="examples-grid">
+                        <div class="example-item">
+                            <strong>Sales Analysis:</strong> "Focus on revenue trends, customer segments, product performance"
+                        </div>
+                        <div class="example-item">
+                            <strong>Marketing:</strong> "Campaign effectiveness, ROI analysis, customer acquisition costs"
+                        </div>
+                        <div class="example-item">
+                            <strong>Operations:</strong> "Efficiency metrics, process bottlenecks, resource utilization"
+                        </div>
+                        <div class="example-item">
+                            <strong>Finance:</strong> "Profitability analysis, cost breakdowns, budget vs actual"
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="prompt-input-container">
+                    <textarea 
+                        id="customPrompt" 
+                        placeholder="Example: Focus on sales trends by month, show customer segmentation by region, highlight seasonal patterns in revenue, create correlation analysis between marketing spend and sales performance, identify top 10 performing products..."
+                        rows="4"
+                        class="prompt-textarea"
+                    ></textarea>
+                    <div class="prompt-hint">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Pro Tips:</strong> Be specific about what you want to see. Mention chart types (bar, line, scatter, pie, heatmap), focus areas (trends, comparisons, correlations), and business context. Leave blank for AI to automatically determine the best approach.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h2>
+                    <i class="fas fa-upload me-2"></i>
+                    Upload Your CSV File
+                </h2>
+                <p>
+                    Simply drag and drop your CSV file or click to browse. Our AI will handle the rest!
+                </p>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-text">Drop your CSV file here</div>
+                    <div class="upload-hint">or click to browse files</div>
+                    <input type="file" class="file-input" id="fileInput" accept=".csv" />
+                </div>
+
+                <div class="selected-file" id="selectedFile">
+                    <div class="file-info">
+                        <div class="file-details">
+                            <div class="file-icon">
+                                <i class="fas fa-file-csv"></i>
+                            </div>
+                            <div class="file-text">
+                                <h4 id="fileName"></h4>
+                                <p id="fileSize"></p>
+                            </div>
+                        </div>
+                        <button class="remove-file" id="removeFile">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- CSV Preview Section -->
+                    <div class="csv-preview" id="csvPreview" style="display: none;">
+                        <div class="preview-header">
+                            <h4><i class="fas fa-table me-2"></i>Dataset Preview</h4>
+                            <button class="preview-toggle" id="previewToggle">
+                                <i class="fas fa-chevron-down"></i> Show Preview
+                            </button>
+                        </div>
+                        
+                        <div class="preview-content" id="previewContent" style="display: none;">
+                            <!-- Loading state -->
+                            <div class="preview-loading" id="previewLoading">
+                                <div class="loading-spinner"></div>
+                                <span>Analyzing your data...</span>
+                            </div>
+                            
+                            <!-- Preview data -->
+                            <div class="preview-data" id="previewData" style="display: none;">
+                                <!-- Basic info -->
+                                <div class="preview-info">
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <span class="info-label">Rows:</span>
+                                            <span class="info-value" id="previewRows">-</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Columns:</span>
+                                            <span class="info-value" id="previewColumns">-</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">File Size:</span>
+                                            <span class="info-value" id="previewFileSize">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Column information -->
+                                <div class="columns-info">
+                                    <h5><i class="fas fa-columns me-2"></i>Columns</h5>
+                                    <div class="columns-grid" id="columnsGrid"></div>
+                                </div>
+                                
+                                <!-- Data preview table -->
+                                <div class="data-table-container">
+                                    <h5><i class="fas fa-list me-2"></i>First 10 Rows</h5>
+                                    <div class="table-wrapper">
+                                        <table class="preview-table" id="previewTable">
+                                            <thead id="previewTableHead"></thead>
+                                            <tbody id="previewTableBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <!-- Summary statistics -->
+                                <div class="summary-stats" id="summaryStats" style="display: none;">
+                                    <h5><i class="fas fa-chart-bar me-2"></i>Summary Statistics</h5>
+                                    <div class="stats-grid" id="statsGrid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="generate-btn" id="generateBtn" disabled>
+                    <i class="fas fa-magic me-2"></i>Generate AI Dashboard
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Processing your data...</div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Result Section -->
+        <div class="result-container" id="resultContainer">
+            <div class="result-title">
+                <i class="fas fa-check-circle"></i>Dashboard Generated Successfully!
+            </div>
+            <a href="#" class="dashboard-link" id="dashboardLink" target="_blank">
+                <i class="fas fa-external-link-alt"></i>View Dashboard
+            </a>
+            <button class="dashboard-link fallback-link" id="fallbackLink" onclick="tryFallbackUrl()">
+                <i class="fas fa-link"></i>Try Alternative Link
+            </button>
+        </div>
+
+        <!-- Status Message -->
+        <div class="status-message" id="statusMessage">
+            <i class="fas fa-info-circle me-2"></i>Ready to generate your dashboard
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        let selectedFile = null;
+        let uploadId = null;
+
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const selectedFileDiv = document.getElementById('selectedFile');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFile = document.getElementById('removeFile');
+        const generateBtn = document.getElementById('generateBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const errorMessage = document.getElementById('errorMessage');
+        const resultContainer = document.getElementById('resultContainer');
+        const dashboardLink = document.getElementById('dashboardLink');
+        const statusMessage = document.getElementById('statusMessage');
+        
+        // CSV Preview elements
+        const csvPreview = document.getElementById('csvPreview');
+        const previewToggle = document.getElementById('previewToggle');
+        const previewContent = document.getElementById('previewContent');
+        const previewLoading = document.getElementById('previewLoading');
+        const previewData = document.getElementById('previewData');
+        const previewRows = document.getElementById('previewRows');
+        const previewColumns = document.getElementById('previewColumns');
+        const previewFileSize = document.getElementById('previewFileSize');
+        const columnsGrid = document.getElementById('columnsGrid');
+        const previewTableHead = document.getElementById('previewTableHead');
+        const previewTableBody = document.getElementById('previewTableBody');
+        const summaryStats = document.getElementById('summaryStats');
+        const statsGrid = document.getElementById('statsGrid');
+
+        // File upload handling
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        removeFile.addEventListener('click', () => {
+            selectedFile = null;
+            selectedFileDiv.style.display = 'none';
+            csvPreview.style.display = 'none'; // Hide preview section
+            fileInput.value = '';
+            updateGenerateButton();
+            updateStatusMessage('File removed. Ready to upload a new file.', 'info');
+        });
+
+        generateBtn.addEventListener('click', generateDashboard);
+        
+        // CSV Preview toggle
+        previewToggle.addEventListener('click', togglePreview);
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+                showError('Please select a valid CSV file.');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            selectedFileDiv.style.display = 'block';
+            csvPreview.style.display = 'block'; // Show preview section
+            updateGenerateButton();
+            hideError();
+            updateStatusMessage(`File "${file.name}" selected. Ready to generate dashboard!`, 'success');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateGenerateButton() {
+            generateBtn.disabled = !selectedFile;
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            updateStatusMessage(message, 'error');
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        function updateStatusMessage(message, type = 'info') {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+        }
+
+        function showProgress() {
+            progressContainer.style.display = 'block';
+            resultContainer.style.display = 'none';
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span class="loading-spinner"></span>Generating AI Dashboard...';
+            updateStatusMessage('Processing your data with AI...', 'info');
+        }
+
+        function hideProgress() {
+            progressContainer.style.display = 'none';
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Generate AI Dashboard';
+        }
+
+        function updateProgress(percentage, text) {
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = text;
+        }
+
+        async function generateDashboard() {
+            if (!selectedFile) {
+                showError('Please select a file.');
+                return;
+            }
+
+            showProgress();
+            hideError();
+            updateProgress(10, 'Uploading file to AI processing engine...');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                
+                // Add custom prompt if provided
+                const customPrompt = document.getElementById('customPrompt').value.trim();
+                if (customPrompt) {
+                    formData.append('custom_prompt', customPrompt);
+                    console.log('Custom prompt:', customPrompt);
+                }
+                
+                // Note: API key is now handled server-side for security
+                console.log('Sending file:', selectedFile.name, 'Size:', selectedFile.size);
+
+                updateProgress(30, 'Analyzing CSV structure and data patterns...');
+
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    let errorMessage = 'Failed to generate dashboard';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.detail || errorData.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = response.statusText || errorMessage;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                updateProgress(70, 'Generating AI-powered visualizations and insights...');
+
+                const data = await response.json();
+                uploadId = data.upload_id;
+
+                // Poll for completion
+                await pollForCompletion();
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || 'An error occurred while generating the dashboard.');
+                hideProgress();
+            }
+        }
+
+        async function pollForCompletion() {
+            const maxAttempts = 60; // 5 minutes with 5-second intervals
+            let attempts = 0;
+
+            const poll = async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/status/${uploadId}`);
+                    const data = await response.json();
+
+                    if (data.status === 'completed') {
+                        updateProgress(100, 'Dashboard ready! Finalizing...');
+                        setTimeout(() => {
+                            hideProgress();
+                            showResult(data.dashboard_url);
+                        }, 1000);
+                        return;
+                    } else if (data.status === 'failed') {
+                        throw new Error(data.error || 'Dashboard generation failed');
+                    }
+
+                    attempts++;
+                    if (attempts >= maxAttempts) {
+                        throw new Error('Dashboard generation timed out');
+                    }
+
+                    // Continue polling
+                    setTimeout(poll, 5000);
+                } catch (error) {
+                    throw error;
+                }
+            };
+
+            await poll();
+        }
+
+        function showResult(dashboardUrl) {
+            const fullDashboardUrl = dashboardUrl.startsWith('http') ? dashboardUrl : `${API_BASE_URL}${dashboardUrl}`;
+            dashboardLink.href = fullDashboardUrl;
+            resultContainer.style.display = 'block';
+            updateStatusMessage('🎉 Your AI-powered dashboard has been generated successfully! Click the link above to view it.', 'success');
+            
+            // Test the dashboard URL
+            testDashboardAccess(fullDashboardUrl);
+        }
+        
+        async function testDashboardAccess(dashboardUrl) {
+            try {
+                const response = await fetch(dashboardUrl);
+                if (response.ok) {
+                    console.log('✅ Dashboard is accessible at:', dashboardUrl);
+                } else {
+                    console.warn('⚠️ Dashboard not accessible at:', dashboardUrl, 'Status:', response.status);
+                    const directUrl = dashboardUrl.replace('/dashboards/', '/dashboard/').replace('.html', '');
+                    console.log('🔄 Trying direct endpoint:', directUrl);
+                    
+                    const directResponse = await fetch(directUrl);
+                    if (directResponse.ok) {
+                        console.log('✅ Dashboard accessible via direct endpoint');
+                        dashboardLink.href = directUrl;
+                        updateStatusMessage('Dashboard accessible via direct endpoint. If the link above doesn\'t work, try refreshing the page.', 'success');
+                    } else {
+                        console.error('❌ Dashboard not accessible via direct endpoint either');
+                        showFallbackOption(directUrl);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error testing dashboard access:', error);
+                const directUrl = `${API_BASE_URL}/dashboard/${dashboardUrl.split('/').pop().replace('.html', '')}`;
+                showFallbackOption(directUrl);
+            }
+        }
+        
+        function showFallbackOption(directUrl) {
+            const fallbackLink = document.getElementById('fallbackLink');
+            fallbackLink.style.display = 'inline-block';
+            fallbackLink.onclick = () => tryFallbackUrl(directUrl);
+            updateStatusMessage('Dashboard generated but there may be an issue with file serving. Try the alternative link below.', 'warning');
+        }
+        
+        function tryFallbackUrl(directUrl) {
+            if (directUrl) {
+                window.open(directUrl, '_blank');
+            } else {
+                const currentUrl = document.getElementById('dashboardLink').href;
+                const uniqueId = currentUrl.split('/').pop().replace('.html', '');
+                const fallbackUrl = `${API_BASE_URL}/dashboard/${uniqueId}`;
+                window.open(fallbackUrl, '_blank');
+            }
+        }
+
+        // Check server connectivity on page load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/health`);
+                if (response.ok) {
+                    updateStatusMessage('✅ Connected to AI processing server successfully', 'success');
+                }
+            } catch (error) {
+                updateStatusMessage('⚠️ Cannot connect to server. Make sure the FastAPI server is running on localhost:8000', 'error');
+            }
+        });
+
+        function togglePreview() {
+            const isVisible = previewContent.style.display !== 'none';
+            
+            if (isVisible) {
+                // Hide preview
+                previewContent.style.display = 'none';
+                previewToggle.innerHTML = '<i class="fas fa-chevron-down"></i> Show Preview';
+            } else {
+                // Show preview and load data if not already loaded
+                previewContent.style.display = 'block';
+                previewToggle.innerHTML = '<i class="fas fa-chevron-up"></i> Hide Preview';
+                
+                if (previewData.style.display === 'none') {
+                    loadCSVPreview();
+                }
+            }
+        }
+
+        async function loadCSVPreview() {
+            if (!selectedFile) return;
+            
+            previewLoading.style.display = 'block';
+            previewData.style.display = 'none';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                
+                const response = await fetch(`${API_BASE_URL}/preview-csv`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load CSV preview');
+                }
+                
+                const previewInfo = await response.json();
+                displayCSVPreview(previewInfo);
+                
+            } catch (error) {
+                console.error('Error loading CSV preview:', error);
+                showError('Failed to load CSV preview: ' + error.message);
+            } finally {
+                previewLoading.style.display = 'none';
+            }
+        }
+
+        function displayCSVPreview(previewInfo) {
+            // Display basic info
+            previewRows.textContent = previewInfo.rows.toLocaleString();
+            previewColumns.textContent = previewInfo.columns;
+            previewFileSize.textContent = formatFileSize(selectedFile.size);
+            
+            // Display columns info
+            displayColumnsInfo(previewInfo.column_names, previewInfo.data_types, previewInfo.missing_values);
+            
+            // Display data preview table
+            displayDataTable(previewInfo.preview);
+            
+            // Display summary statistics
+            if (Object.keys(previewInfo.summary_stats).length > 0) {
+                displaySummaryStats(previewInfo.summary_stats);
+                summaryStats.style.display = 'block';
+            }
+            
+            previewData.style.display = 'block';
+        }
+
+        function displayColumnsInfo(columnNames, dataTypes, missingValues) {
+            columnsGrid.innerHTML = '';
+            
+            columnNames.forEach((colName, index) => {
+                const columnItem = document.createElement('div');
+                columnItem.className = 'column-item';
+                
+                const missingCount = missingValues[colName] || 0;
+                const dataType = dataTypes[colName] || 'unknown';
+                
+                columnItem.innerHTML = `
+                    <div>
+                        <strong>${colName}</strong>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            ${dataType} • ${missingCount} missing
+                        </div>
+                    </div>
+                `;
+                
+                columnsGrid.appendChild(columnItem);
+            });
+        }
+
+        function displayDataTable(previewData) {
+            if (!previewData || previewData.length === 0) return;
+            
+            const columns = Object.keys(previewData[0]);
+            
+            // Create table header
+            previewTableHead.innerHTML = '';
+            const headerRow = document.createElement('tr');
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                headerRow.appendChild(th);
+            });
+            previewTableHead.appendChild(headerRow);
+            
+            // Create table body
+            previewTableBody.innerHTML = '';
+            previewData.forEach(row => {
+                const tr = document.createElement('tr');
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    const value = row[col];
+                    td.textContent = value !== null && value !== undefined ? String(value) : '';
+                    if (value === null || value === undefined) {
+                        td.style.color = 'var(--text-light)';
+                        td.textContent = 'null';
+                    }
+                    tr.appendChild(td);
+                });
+                previewTableBody.appendChild(tr);
+            });
+        }
+
+        function displaySummaryStats(summaryStats) {
+            statsGrid.innerHTML = '';
+            
+            Object.entries(summaryStats).forEach(([column, stats]) => {
+                if (stats.mean !== undefined) {
+                    // Numeric column
+                    const statItem = document.createElement('div');
+                    statItem.className = 'stat-item';
+                    statItem.innerHTML = `
+                        <div class="stat-label">${column}</div>
+                        <div class="stat-value">${stats.mean !== null ? stats.mean.toFixed(2) : 'N/A'}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            Mean • Min: ${stats.min !== null ? stats.min.toFixed(2) : 'N/A'} • Max: ${stats.max !== null ? stats.max.toFixed(2) : 'N/A'}
+                        </div>
+                    `;
+                    statsGrid.appendChild(statItem);
+                } else if (stats.unique_values !== undefined) {
+                    // Categorical column
+                    const statItem = document.createElement('div');
+                    statItem.className = 'stat-item';
+                    statItem.innerHTML = `
+                        <div class="stat-label">${column}</div>
+                        <div class="stat-value">${stats.unique_values}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            Unique values
+                        </div>
+                    `;
+                    statsGrid.appendChild(statItem);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
